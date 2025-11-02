@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Church Countdown Timer - Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(30, 30, 30, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 32px;
+            color: #4a9eff;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        #preview-display {
+            background: #000;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin-bottom: 40px;
+            text-align: center;
+            border: 3px solid #333;
+        }
+
+        #preview-timer {
+            font-size: clamp(60px, 10vw, 120px);
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s ease;
+        }
+
+        #preview-timer.warning {
+            color: #ff6b6b;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        #preview-timer.timeup {
+            font-size: clamp(50px, 8vw, 100px);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .control-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .time-input-wrapper {
+            text-align: center;
+        }
+
+        .time-input {
+            width: 90px;
+            padding: 15px;
+            font-size: 28px;
+            text-align: center;
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            background: #222;
+            box-shadow: 0 0 15px rgba(74, 158, 255, 0.3);
+        }
+
+        .time-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 18px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+        }
+
+        #pauseBtn {
+            background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%);
+            color: white;
+        }
+
+        #resetBtn {
+            background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
+            color: white;
+        }
+
+        #liveBtn {
+            background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+            color: white;
+        }
+
+        #liveBtn.active {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            animation: liveGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes liveGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(76, 175, 80, 0.8); }
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #666;
+            transition: all 0.3s;
+        }
+
+        .status-dot.active {
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+        }
+
+        .status-dot.paused {
+            background: #ff9800;
+            box-shadow: 0 0 10px #ff9800;
+        }
+
+        .status-dot.live {
+            background: #e91e63;
+            box-shadow: 0 0 10px #e91e63;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .keyboard-hints {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .keyboard-hints kbd {
+            background: #333;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #4a9eff;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .time-input {
+                width: 70px;
+                font-size: 22px;
+                padding: 12px;
+            }
+
+            #preview-timer {
+                font-size: clamp(40px, 12vw, 80px);
+            }
+
+            button {
+                padding: 15px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏱️ Church Timer Control</h1>
+        <p class="subtitle">Professional Countdown Timer for Live Services</p>
+
+        <!-- Preview Display -->
+        <div id="preview-display">
+            <div id="preview-timer">00:00:00</div>
+        </div>
+
+        <!-- Time Input Section -->
+        <div class="control-section">
+            <div class="section-title">Set Time (Up to 5 Hours)</div>
+            <div class="time-inputs">
+                <div class="time-input-wrapper">
+                    <input type="number" id="hoursInput" class="time-input" min="0" max="5" value="0">
+                    <div class="time-label">Hours</div>
+                </div>
+                <div class="time-input-wrapper">
+                    <input type="number" id="minutesInput" class="time-input" min="0" max="59" value="5">
+                    <div class="time-label">Minutes</div>
+                </div>
+                <div class="time-input-wrapper">
+                    <input type="number" id="secondsInput" class="time-input" min="0" max="59" value="0">
+                    <div class="time-label">Seconds</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="control-section">
+            <div class="section-title">Controls</div>
+            <div class="button-grid">
+                <button id="startBtn">▶ Start</button>
+                <button id="pauseBtn">⏸ Pause</button>
+                <button id="resetBtn">⏹ Reset</button>
+                <button id="liveBtn">📡 Go Live</button>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot" id="timerStatus"></div>
+                <span id="statusText">Ready</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" id="liveStatus"></div>
+                <span id="liveStatusText">Offline</span>
+            </div>
+        </div>
+
+        <!-- Keyboard Shortcuts -->
+        <div class="keyboard-hints">
+            Shortcuts: SPACE = Start/Pause • R = Reset • L = Go Live
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let countdown = null;
+        let remainingSeconds = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let projectorWindow = null;
+
+        // Get DOM elements
+        const hoursInput = document.getElementById('hoursInput');
+        const minutesInput = document.getElementById('minutesInput');
+        const secondsInput = document.getElementById('secondsInput');
+        const previewTimer = document.getElementById('preview-timer');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const liveBtn = document.getElementById('liveBtn');
+        const timerStatus = document.getElementById('timerStatus');
+        const statusText = document.getElementById('statusText');
+        const liveStatus = document.getElementById('liveStatus');
+        const liveStatusText = document.getElementById('liveStatusText');
+
+        // Format time as HH:MM:SS
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Update display
+        function updateDisplay() {
+            let displayText;
+            
+            if (remainingSeconds <= 0 && (isRunning || isPaused)) {
+                displayText = 'TIME UP';
+                previewTimer.classList.add('warning', 'timeup');
+            } else {
+                displayText = formatTime(remainingSeconds);
+                previewTimer.classList.remove('timeup');
+                
+                if (remainingSeconds <= 60 && remainingSeconds > 0) {
+                    previewTimer.classList.add('warning');
+                } else {
+                    previewTimer.classList.remove('warning');
+                }
+            }
+            
+            previewTimer.textContent = displayText;
+            
+            // Update projector window if open
+            if (projectorWindow && !projectorWindow.closed) {
+                try {
+                    const projectorTimer = projectorWindow.document.getElementById('timer-text');
+                    if (projectorTimer) {
+                        projectorTimer.textContent = displayText;
+                        projectorTimer.className = previewTimer.className;
+                    }
+                } catch (e) {
+                    console.log('Cannot update projector window');
+                }
+            }
+        }
+
+        // Get total seconds from inputs
+        function getTotalSeconds() {
+            const hours = parseInt(hoursInput.value) || 0;
+            const minutes = parseInt(minutesInput.value) || 0;
+            const seconds = parseInt(secondsInput.value) || 0;
+            return (hours * 3600) + (minutes * 60) + seconds;
+        }
+
+        // Update status indicators
+        function updateStatus() {
+            timerStatus.classList.remove('active', 'paused');
+            
+            if (isRunning) {
+                timerStatus.classList.add('active');
+                statusText.textContent = 'Running';
+            } else if (isPaused) {
+                timerStatus.classList.add('paused');
+                statusText.textContent = 'Paused';
+            } else {
+                statusText.textContent = 'Ready';
+            }
+        }
+
+        // Start timer
+        function start() {
+            if (!isRunning && !isPaused) {
+                remainingSeconds = getTotalSeconds();
+                if (remainingSeconds === 0) {
+                    alert('Please set a time first!');
+                    return;
+                }
+            }
+            
+            isRunning = true;
+            isPaused = false;
+            updateStatus();
+            
+            if (countdown) clearInterval(countdown);
+            
+            countdown = setInterval(() => {
+                remainingSeconds--;
+                updateDisplay();
+                
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdown);
+                    isRunning = false;
+                    updateStatus();
+                }
+            }, 1000);
+        }
+
+        // Pause timer
+        function pause() {
+            if (isRunning) {
+                clearInterval(countdown);
+                isRunning = false;
+                isPaused = true;
+                updateStatus();
+            }
+        }
+
+        // Reset timer
+        function reset() {
+            clearInterval(countdown);
+            isRunning = false;
+            isPaused = false;
+            remainingSeconds = 0;
+            updateDisplay();
+            updateStatus();
+        }
+
+        // Toggle live mode
+        function toggleLive() {
+            if (projectorWindow && !projectorWindow.closed) {
+                // Close projector window
+                projectorWindow.close();
+                projectorWindow = null;
+                liveBtn.classList.remove('active');
+                liveBtn.textContent = '📡 Go Live';
+                liveStatus.classList.remove('live');
+                liveStatusText.textContent = 'Offline';
+            } else {
+                // Open projector window
+                openProjector();
+            }
+        }
+
+        // Open projector window
+        function openProjector() {
+            // Check if we can detect multiple screens
+            if (window.screen && window.screen.isExtended === false) {
+                alert('⚠️ No second screen detected!\n\nPlease connect an extended display/projector and try again.');
+                return;
+            }
+
+            projectorWindow = window.open('', 'ChurchTimerProjector', 'width=1920,height=1080,left=2000,top=0');
+            
+            if (!projectorWindow) {
+                alert('❌ Pop-up blocked!\n\nPlease allow pop-ups for this site to use Live mode.');
+                return;
+            }
+
+            // Write projector HTML
+            projectorWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Church Timer - Projector View</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            background: #000;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            overflow: hidden;
+                            cursor: none;
+                        }
+                        #timer-text {
+                            font-size: clamp(140px, 20vw, 400px);
+                            font-weight: 700;
+                            color: #fff;
+                            letter-spacing: 0.05em;
+                            text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+                            font-variant-numeric: tabular-nums;
+                            font-family: 'Segoe UI', Arial, sans-serif;
+                            transition: color 0.3s ease;
+                        }
+                        #timer-text.warning {
+                            color: #ff6b6b;
+                            animation: pulse 1s ease-in-out infinite;
+                        }
+                        #timer-text.timeup {
+                            font-size: clamp(120px, 18vw, 350px);
+                            letter-spacing: 0.1em;
+                        }
+                        @keyframes pulse {
+                            0%, 100% { opacity: 1; }
+                            50% { opacity: 0.6; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div id="timer-text">${previewTimer.textContent}</div>
+                </body>
+                </html>
+            `);
+            
+            projectorWindow.document.close();
+            
+            // Try to make it fullscreen
+            setTimeout(() => {
+                try {
+                    if (projectorWindow.document.documentElement.requestFullscreen) {
+                        projectorWindow.document.documentElement.requestFullscreen().catch(() => {
+                            console.log('User declined fullscreen');
+                        });
+                    }
+                } catch (e) {
+                    console.log('Fullscreen not available');
+                }
+            }, 500);
+            
+            // Update UI
+            liveBtn.classList.add('active');
+            liveBtn.textContent = '🔴 LIVE';
+            liveStatus.classList.add('live');
+            liveStatusText.textContent = 'Broadcasting';
+            
+            // Monitor window
+            const checkWindow = setInterval(() => {
+                if (!projectorWindow || projectorWindow.closed) {
+                    clearInterval(checkWindow);
+                    projectorWindow = null;
+                    liveBtn.classList.remove('active');
+                    liveBtn.textContent = '📡 Go Live';
+                    liveStatus.classList.remove('live');
+                    liveStatusText.textContent = 'Offline';
+                }
+            }, 1000);
+        }
+
+        // Input change handler
+        function handleInputChange() {
+            if (!isRunning && !isPaused) {
+                remainingSeconds = getTotalSeconds();
+                updateDisplay();
+            }
+        }
+
+        // Validate inputs
+        function validateInput(input) {
+            let value = parseInt(input.value) || 0;
+            const max = parseInt(input.max);
+            const min = parseInt(input.min);
+            
+            if (value > max) value = max;
+            if (value < min) value = min;
+            
+            input.value = value;
+        }
+
+        // Event listeners
+        startBtn.onclick = start;
+        pauseBtn.onclick = pause;
+        resetBtn.onclick = reset;
+        liveBtn.onclick = toggleLive;
+
+        hoursInput.oninput = () => { validateInput(hoursInput); handleInputChange(); };
+        minutesInput.oninput = () => { validateInput(minutesInput); handleInputChange(); };
+        secondsInput.oninput = () => { validateInput(secondsInput); handleInputChange(); };
+
+        // Keyboard shortcuts
+        document.onkeydown = (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            
+            if (e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                if (isRunning) pause();
+                else start();
+            } else if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                reset();
+            } else if (e.key === 'l' || e.key === 'L') {
+                e.preventDefault();
+                toggleLive();
+            }
+        };
+
+        // Initialize
+        remainingSeconds = getTotalSeconds();
+        updateDisplay();
+    </script>
+</body>
+</html>
