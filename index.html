@@ -535,23 +535,17 @@
                         }
                         .fullscreen-hint {
                             position: fixed;
-                            bottom: 30px;
+                            bottom: 40px;
                             left: 50%;
                             transform: translateX(-50%);
-                            color: #fff;
-                            font-size: 16px;
+                            color: #999;
+                            font-size: 14px;
                             font-family: 'Segoe UI', Arial, sans-serif;
-                            background: rgba(255, 255, 255, 0.1);
-                            padding: 12px 24px;
+                            background: rgba(0, 0, 0, 0.6);
+                            padding: 10px 20px;
                             border-radius: 8px;
-                            border: 2px solid rgba(255, 255, 255, 0.2);
-                            cursor: pointer;
-                            transition: all 0.3s;
-                        }
-                        .fullscreen-hint:hover {
-                            background: rgba(255, 255, 255, 0.2);
-                            border-color: rgba(255, 255, 255, 0.4);
-                            transform: translateX(-50%) translateY(-2px);
+                            z-index: 9999;
+                            pointer-events: none;
                         }
                         .fullscreen-hint.hidden {
                             display: none;
@@ -560,45 +554,45 @@
                 </head>
                 <body>
                     <div id="timer-text">${previewTimer.textContent}</div>
-                    <button class="fullscreen-hint" id="fullscreenBtn">🖥️ Enter Fullscreen</button>
+                    <div class="fullscreen-hint" id="fullscreenHint">Press F or F11 for fullscreen</div>
                     <script>
-                        const fullscreenBtn = document.getElementById('fullscreenBtn');
+                        const fullscreenHint = document.getElementById('fullscreenHint');
                         
-                        // Fullscreen button click
-                        fullscreenBtn.addEventListener('click', function() {
-                            if (!document.fullscreenElement) {
-                                if (document.documentElement.requestFullscreen) {
-                                    document.documentElement.requestFullscreen();
-                                } else if (document.documentElement.webkitRequestFullscreen) {
-                                    document.documentElement.webkitRequestFullscreen();
-                                } else if (document.documentElement.mozRequestFullScreen) {
-                                    document.documentElement.mozRequestFullScreen();
-                                } else if (document.documentElement.msRequestFullscreen) {
-                                    document.documentElement.msRequestFullscreen();
-                                }
-                            }
-                        });
-                        
-                        // Hide button when in fullscreen
+                        // Hide hint when in fullscreen
                         document.addEventListener('fullscreenchange', function() {
                             if (document.fullscreenElement) {
-                                fullscreenBtn.classList.add('hidden');
+                                fullscreenHint.classList.add('hidden');
                             } else {
-                                fullscreenBtn.classList.remove('hidden');
+                                fullscreenHint.classList.remove('hidden');
                             }
                         });
                         
-                        // F11 key for fullscreen
+                        // Keyboard controls
                         document.addEventListener('keydown', function(e) {
-                            if (e.key === 'F11') {
+                            // F key or F11 to toggle fullscreen
+                            if (e.key === 'f' || e.key === 'F' || e.key === 'F11') {
                                 e.preventDefault();
                                 if (!document.fullscreenElement) {
-                                    document.documentElement.requestFullscreen();
+                                    if (document.documentElement.requestFullscreen) {
+                                        document.documentElement.requestFullscreen();
+                                    } else if (document.documentElement.webkitRequestFullscreen) {
+                                        document.documentElement.webkitRequestFullscreen();
+                                    } else if (document.documentElement.mozRequestFullScreen) {
+                                        document.documentElement.mozRequestFullScreen();
+                                    } else if (document.documentElement.msRequestFullscreen) {
+                                        document.documentElement.msRequestFullscreen();
+                                    }
                                 } else {
+                                    if (document.exitFullscreen) {
+                                        document.exitFullscreen();
+                                    }
+                                }
+                            }
+                            // ESC to exit fullscreen
+                            else if (e.key === 'Escape' && document.fullscreenElement) {
+                                if (document.exitFullscreen) {
                                     document.exitFullscreen();
                                 }
-                            } else if (e.key === 'Escape' && document.fullscreenElement) {
-                                document.exitFullscreen();
                             }
                         });
                     <\/script>
