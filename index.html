@@ -602,9 +602,9 @@
         resetBtn.onclick = reset;
         liveBtn.onclick = toggleLive;
 
-        hoursInput.oninput = () => { validateInput(hoursInput); handleInputChange(); };
-        minutesInput.oninput = () => { validateInput(minutesInput); handleInputChange(); };
-        secondsInput.oninput = () => { validateInput(secondsInput); handleInputChange(); };
+        hoursInput.oninput = () => { validateInput(hoursInput); };
+        minutesInput.oninput = () => { validateInput(minutesInput); };
+        secondsInput.oninput = () => { validateInput(secondsInput); };
 
         // Keyboard shortcuts
         document.onkeydown = (e) => {
