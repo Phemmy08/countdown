@@ -21,6 +21,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            cursor: default;
         }
 
         .container {
@@ -113,6 +114,7 @@
             color: #fff;
             font-weight: 600;
             transition: all 0.3s;
+            cursor: text;
         }
 
         .time-input:focus {
@@ -246,14 +248,6 @@
             font-size: 12px;
             margin-top: 20px;
             line-height: 1.6;
-        }
-
-        .keyboard-hints kbd {
-            background: #333;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            color: #4a9eff;
         }
 
         @media (max-width: 768px) {
@@ -493,13 +487,7 @@
 
         // Open projector window
         function openProjector() {
-            // Check if we can detect multiple screens
-            if (window.screen && window.screen.isExtended === false) {
-                alert('⚠️ No second screen detected!\n\nPlease connect an extended display/projector and try again.');
-                return;
-            }
-
-            projectorWindow = window.open('', 'ChurchTimerProjector', 'width=1920,height=1080,left=2000,top=0');
+            projectorWindow = window.open('', 'ChurchTimerProjector', 'width=1920,height=1080,left=1920,top=0');
             
             if (!projectorWindow) {
                 alert('❌ Pop-up blocked!\n\nPlease allow pop-ups for this site to use Live mode.');
@@ -589,6 +577,7 @@
 
         // Input change handler
         function handleInputChange() {
+            // Only update when timer is not running or paused
             if (!isRunning && !isPaused) {
                 remainingSeconds = getTotalSeconds();
                 updateDisplay();
