@@ -336,12 +336,12 @@
 
     <script>
         // Global variables
-        let countdown = null;
         let remainingSeconds = 0;
         let isRunning = false;
         let isPaused = false;
         let projectorWindow = null;
         let endTime = null;
+        let animationFrameId = null;
 
         // Get DOM elements
         const hoursInput = document.getElementById('hoursInput');
@@ -368,22 +368,22 @@
         // Update display
         function updateDisplay() {
             let displayText;
+            let warningClass = '';
+            let timeupClass = '';
             
             if (remainingSeconds <= 0 && (isRunning || isPaused)) {
                 displayText = 'TIME UP';
-                previewTimer.classList.add('warning', 'timeup');
+                warningClass = 'warning';
+                timeupClass = 'timeup';
             } else {
                 displayText = formatTime(remainingSeconds);
-                previewTimer.classList.remove('timeup');
-                
                 if (remainingSeconds <= 60 && remainingSeconds > 0) {
-                    previewTimer.classList.add('warning');
-                } else {
-                    previewTimer.classList.remove('warning');
+                    warningClass = 'warning';
                 }
             }
             
             previewTimer.textContent = displayText;
+            previewTimer.className = warningClass + ' ' + timeupClass;
             
             // Update projector window if open
             if (projectorWindow && !projectorWindow.closed) {
@@ -391,11 +391,34 @@
                     const projectorTimer = projectorWindow.document.getElementById('timer-text');
                     if (projectorTimer) {
                         projectorTimer.textContent = displayText;
-                        projectorTimer.className = previewTimer.className;
+                        projectorTimer.className = warningClass + ' ' + timeupClass;
                     }
                 } catch (e) {
                     console.log('Cannot update projector window');
                 }
+            }
+        }
+
+        // Animation loop for smooth updates
+        function timerLoop() {
+            if (!isRunning || !endTime) {
+                animationFrameId = null;
+                return;
+            }
+
+            const now = Date.now();
+            const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+            remainingSeconds = remaining;
+            
+            updateDisplay();
+            
+            if (remainingSeconds <= 0) {
+                isRunning = false;
+                endTime = null;
+                updateStatus();
+                animationFrameId = null;
+            } else {
+                animationFrameId = requestAnimationFrame(timerLoop);
             }
         }
 
@@ -439,44 +462,70 @@
             // Set the end time based on current time + remaining seconds
             endTime = Date.now() + (remainingSeconds * 1000);
             
-            if (countdown) clearInterval(countdown);
+            // Cancel any existing animation frame
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
             
-            countdown = setInterval(() => {
-                // Calculate remaining time based on end time
-                const now = Date.now();
-                const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
-                remainingSeconds = remaining;
-                
-                updateDisplay();
-                
-                if (remainingSeconds <= 0) {
-                    clearInterval(countdown);
-                    isRunning = false;
-                    endTime = null;
-                    updateStatus();
+            // Start the animation loop
+            animationFrameId = requestAnimationFrame(timerLoop);
+            
+            // Also trigger loop in projector window if open
+            if (projectorWindow && !projectorWindow.closed) {
+                try {
+                    projectorWindow.postMessage({
+                        type: 'start',
+                        endTime: endTime
+                    }, '*');
+                } catch (e) {
+                    console.log('Cannot message projector window');
                 }
-            }, 100); // Check every 100ms for smoother updates
+            }
         }
 
         // Pause timer
         function pause() {
             if (isRunning) {
-                clearInterval(countdown);
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
                 isRunning = false;
                 isPaused = true;
                 updateStatus();
+                
+                // Pause projector window
+                if (projectorWindow && !projectorWindow.closed) {
+                    try {
+                        projectorWindow.postMessage({ type: 'pause' }, '*');
+                    } catch (e) {
+                        console.log('Cannot message projector window');
+                    }
+                }
             }
         }
 
         // Reset timer
         function reset() {
-            clearInterval(countdown);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             isRunning = false;
             isPaused = false;
             remainingSeconds = 0;
             endTime = null;
             updateDisplay();
             updateStatus();
+            
+            // Reset projector window
+            if (projectorWindow && !projectorWindow.closed) {
+                try {
+                    projectorWindow.postMessage({ type: 'reset' }, '*');
+                } catch (e) {
+                    console.log('Cannot message projector window');
+                }
+            }
         }
 
         // Toggle live mode
@@ -567,6 +616,78 @@
                     <div class="fullscreen-hint" id="fullscreenHint">Press F or F11 for fullscreen</div>
                     <script>
                         const fullscreenHint = document.getElementById('fullscreenHint');
+                        const timerText = document.getElementById('timer-text');
+                        let endTime = null;
+                        let animationFrameId = null;
+                        let isRunning = false;
+                        
+                        function formatTime(totalSeconds) {
+                            const hours = Math.floor(totalSeconds / 3600);
+                            const minutes = Math.floor((totalSeconds % 3600) / 60);
+                            const seconds = totalSeconds % 60;
+                            return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                        }
+                        
+                        function projectorLoop() {
+                            if (!isRunning || !endTime) {
+                                animationFrameId = null;
+                                return;
+                            }
+                            
+                            const now = Date.now();
+                            const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+                            
+                            let displayText;
+                            let warningClass = '';
+                            let timeupClass = '';
+                            
+                            if (remaining <= 0) {
+                                displayText = 'TIME UP';
+                                warningClass = 'warning';
+                                timeupClass = 'timeup';
+                                isRunning = false;
+                                endTime = null;
+                            } else {
+                                displayText = formatTime(remaining);
+                                if (remaining <= 60) {
+                                    warningClass = 'warning';
+                                }
+                            }
+                            
+                            timerText.textContent = displayText;
+                            timerText.className = warningClass + ' ' + timeupClass;
+                            
+                            if (isRunning) {
+                                animationFrameId = requestAnimationFrame(projectorLoop);
+                            }
+                        }
+                        
+                        // Listen for messages from main window
+                        window.addEventListener('message', function(event) {
+                            if (event.data.type === 'start') {
+                                endTime = event.data.endTime;
+                                isRunning = true;
+                                if (animationFrameId) {
+                                    cancelAnimationFrame(animationFrameId);
+                                }
+                                animationFrameId = requestAnimationFrame(projectorLoop);
+                            } else if (event.data.type === 'pause') {
+                                isRunning = false;
+                                if (animationFrameId) {
+                                    cancelAnimationFrame(animationFrameId);
+                                    animationFrameId = null;
+                                }
+                            } else if (event.data.type === 'reset') {
+                                isRunning = false;
+                                endTime = null;
+                                if (animationFrameId) {
+                                    cancelAnimationFrame(animationFrameId);
+                                    animationFrameId = null;
+                                }
+                                timerText.textContent = '00:00:00';
+                                timerText.className = '';
+                            }
+                        });
                         
                         // Hide hint when in fullscreen
                         document.addEventListener('fullscreenchange', function() {
@@ -579,7 +700,6 @@
                         
                         // Keyboard controls
                         document.addEventListener('keydown', function(e) {
-                            // F key or F11 to toggle fullscreen
                             if (e.key === 'f' || e.key === 'F' || e.key === 'F11') {
                                 e.preventDefault();
                                 if (!document.fullscreenElement) {
@@ -597,9 +717,7 @@
                                         document.exitFullscreen();
                                     }
                                 }
-                            }
-                            // ESC to exit fullscreen
-                            else if (e.key === 'Escape' && document.fullscreenElement) {
+                            } else if (e.key === 'Escape' && document.fullscreenElement) {
                                 if (document.exitFullscreen) {
                                     document.exitFullscreen();
                                 }
@@ -618,6 +736,20 @@
             liveStatus.classList.add('live');
             liveStatusText.textContent = 'Broadcasting';
             
+            // If timer is already running, sync the projector
+            if (isRunning && endTime) {
+                setTimeout(() => {
+                    try {
+                        projectorWindow.postMessage({
+                            type: 'start',
+                            endTime: endTime
+                        }, '*');
+                    } catch (e) {
+                        console.log('Cannot message projector window');
+                    }
+                }, 100);
+            }
+            
             // Monitor window
             const checkWindow = setInterval(() => {
                 if (!projectorWindow || projectorWindow.closed) {
@@ -629,15 +761,6 @@
                     liveStatusText.textContent = 'Offline';
                 }
             }, 1000);
-        }
-
-        // Input change handler
-        function handleInputChange() {
-            // Only update when timer is not running or paused
-            if (!isRunning && !isPaused) {
-                remainingSeconds = getTotalSeconds();
-                updateDisplay();
-            }
         }
 
         // Validate inputs
