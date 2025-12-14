@@ -341,6 +341,7 @@
         let isRunning = false;
         let isPaused = false;
         let projectorWindow = null;
+        let endTime = null;
 
         // Get DOM elements
         const hoursInput = document.getElementById('hoursInput');
@@ -435,18 +436,26 @@
             isPaused = false;
             updateStatus();
             
+            // Set the end time based on current time + remaining seconds
+            endTime = Date.now() + (remainingSeconds * 1000);
+            
             if (countdown) clearInterval(countdown);
             
             countdown = setInterval(() => {
-                remainingSeconds--;
+                // Calculate remaining time based on end time
+                const now = Date.now();
+                const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+                remainingSeconds = remaining;
+                
                 updateDisplay();
                 
                 if (remainingSeconds <= 0) {
                     clearInterval(countdown);
                     isRunning = false;
+                    endTime = null;
                     updateStatus();
                 }
-            }, 1000);
+            }, 100); // Check every 100ms for smoother updates
         }
 
         // Pause timer
@@ -465,6 +474,7 @@
             isRunning = false;
             isPaused = false;
             remainingSeconds = 0;
+            endTime = null;
             updateDisplay();
             updateStatus();
         }
