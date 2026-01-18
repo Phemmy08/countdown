@@ -802,6 +802,11 @@
             }
         };
 
+
+        // Create audio element for time up sound
+        const timeUpSound = new Audio('timeup.mp3'); // Put your sound file in the same folder
+        timeUpSound.volume = 1.0; // Adjust volume (0.0 to 1.0)
+        
         // Initialize
         remainingSeconds = getTotalSeconds();
         updateDisplay();
