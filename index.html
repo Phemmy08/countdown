@@ -335,13 +335,14 @@
     </div>
 
     <script>
-        // Global variables
+         // Global variables
         let remainingSeconds = 0;
         let isRunning = false;
         let isPaused = false;
         let projectorWindow = null;
         let endTime = null;
         let animationFrameId = null;
+        let timeUpSoundPlayed = false;
 
         // Get DOM elements
         const hoursInput = document.getElementById('hoursInput');
@@ -806,7 +807,7 @@
         // Create audio element for time up sound
         const timeUpSound = new Audio('timeup.mp3'); // Put your sound file in the same folder
         timeUpSound.volume = 1.0; // Adjust volume (0.0 to 1.0)
-        
+
         // Initialize
         remainingSeconds = getTotalSeconds();
         updateDisplay();
